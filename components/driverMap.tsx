@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import syncData from "@/lib/firebase/syncData";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import Link from "next/link";
 
 interface MapProps {
   zoom: number;
@@ -16,12 +18,20 @@ const GoogleMapComponent: React.FC<MapProps> = ({
   zoom,
   routeCoordinates,
 }) => {
-  const [nextStop, setNextStop] = useState<any>();
+  const [nextStop, setNextStop] = useState<any>({
+    name: "",
+    duration: "",
+    distance: "",
+  });
   const [newPosition, setNewPosition] = useState<{
     lat: number;
     lng: number;
-  }>();
+  }>({
+    lat: 0,
+    lng: 0,
+  });
   const [posts, setPosts] = useState<any>();
+  const [message, setMessage] = useState<string>("");
   const directionsRendererRef = useRef<any>();
   const [isMoving, setIsMoving] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -33,7 +43,8 @@ const GoogleMapComponent: React.FC<MapProps> = ({
   >([]);
 
   useEffect(() => {
-    syncData(newPosition as any, nextStop, routeCoordinates, { center, zoom });
+    if (!newPosition && !routeCoordinates && !nextStop) return
+    syncData(newPosition, nextStop, routeCoordinates, { center, zoom });
   }, [newPosition, center, routeCoordinates, zoom, nextStop]);
 
   useEffect(() => {
@@ -48,7 +59,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({
     loader.load().then(() => {
       const map = new google.maps.Map(mapContainerRef.current!, {
         center,
-        zoom: 10,
+        zoom: 15,
       });
 
       // Draw route
@@ -58,7 +69,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({
         suppressMarkers: false,
         polylineOptions: {
           strokeColor: "blue",
-          strokeOpacity: 0.6,
+          strokeOpacity: 0.4,
           strokeWeight: 5,
         },
       });
@@ -101,7 +112,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({
             fillOpacity: 1,
             map,
             center: coordinatesA[0],
-            radius: 100,
+            radius: 150,
             zIndex: 1,
           });
         } else {
@@ -167,13 +178,14 @@ const GoogleMapComponent: React.FC<MapProps> = ({
 
     if (isMoving) {
       moveInterval = setInterval(moveCircle, 200);
-    }
-    if (!isMoving) {
-      if (currentPosition === coordinates.length - 1) {
+      setMessage("The bus is moving");
+    } else if (currentPosition === coordinates.length - 1) {
+        setMessage("Arrived at destination");
         setCurrentPosition(0);
         setIsMoving((prevState) => !prevState);
+      } else if((currentPosition < coordinates.length - 1) && !isMoving){
+        setMessage("Stopped the bus");
       }
-    }
 
     return () => {
       clearInterval(moveInterval);
@@ -193,22 +205,50 @@ const GoogleMapComponent: React.FC<MapProps> = ({
   };
 
   return (
-    <div>
-      <div ref={mapContainerRef} style={{ width: "100%", height: "70vh" }} />
-      <div>
-        <p>Next Stop: {nextStop?.name}</p>
-        <p>Remaining Distance: {nextStop?.distance}</p>
-        <p>Remaining Duration: {nextStop?.duration}</p>
-      </div>
-      <button
-        onClick={handleToggleMovement}
-        className={`p-4 ${
-          isMoving ? "bg-red-500 text-red-100" : "bg-green-500 text-green-100"
-        }`}
-      >
-        {isMoving ? "Stop" : "Start"} Bus
-      </button>
-    </div>
+        <Card className="mx-auto">
+        <CardHeader>
+          <div className="flex justify-between">
+            <CardTitle className="text-xl">Nyabugogo - Kimironko 
+              <span className="font-semibold text-blue-700 bg-blue-100 italic p-1 rounded-full text-sm px-3 mx-2">Driver</span>
+            </CardTitle>
+            <Link
+              href={"/user" }
+              target="_blank"
+              className={`px-4 py-2  rounded-md font-normal bg-blue-500 text-blue-50`}
+            >
+                  View As User
+            </Link>
+          </div>
+          <CardDescription>
+            <p>Next Stop: <span className="font-bold">{nextStop?.name}</span></p>
+            <div className="flex gap-2">
+              <p>Distance: <span className="font-bold">{nextStop?.distance}</span> </p>
+              <p>Time: <span className="font-bold">{nextStop?.duration}</span></p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={handleToggleMovement}
+                className={`p-4 mt-2 rounded-md font-bold ${
+                  isMoving ? "bg-red-500 text-red-100" : "bg-green-500 text-green-50"
+                }`}
+              >
+                {isMoving ? "Stop" : "Start"} Bus
+              </button>
+
+              { message == "Stopped the bus" ? 
+              <p className="mt-2 text-red-500 bg-red-100 font-bold p-4 rounded-md">{message}</p>
+              : message == "The bus is moving" ?
+              <p className="mt-2 text-green-500 bg-green-100 font-bold p-4 rounded-md">{message}</p>
+              : <p className="mt-2 text-green-500 bg-green-100 font-bold p-4 rounded-md">{message}</p>
+            }
+
+            </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div ref={mapContainerRef} style={{ width: "100%", height: "70vh" }} />
+        </CardContent>
+        </Card>
   );
 };
 

@@ -4,6 +4,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import { collection, getDocs, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import "firebase/firestore";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const GoogleMapComponent: React.FC = () => {
   const directionsRendererRef = useRef<any>();
@@ -31,7 +32,7 @@ const GoogleMapComponent: React.FC = () => {
       directionsRendererRef.current.setOptions({
         suppressMarkers: false,
         polylineOptions: {
-          strokeColor: "#0000FF",
+          strokeColor: "blue",
           strokeOpacity: 0.6,
           strokeWeight: 5,
         },
@@ -101,7 +102,7 @@ const GoogleMapComponent: React.FC = () => {
         directionsRendererRef.current.setDirections(result);
         if (circleRef.current) {
           circleRef.current.setCenter(position);
-          circleRef.current.setRadius(100);
+          circleRef.current.setRadius(150);
           circle?.setCenter(position);
         }
       } else {
@@ -111,14 +112,23 @@ const GoogleMapComponent: React.FC = () => {
   }, [data]);
 
   return (
-    <div>
+    <Card className="mx-auto">
+    <CardHeader>
+      <CardTitle className="text-xl">Nyabugogo - Kimironko 
+        <span className="font-semibold text-blue-700 bg-blue-100 italic p-1 rounded-full text-sm px-3 mx-2">User</span>
+      </CardTitle>
+      <CardDescription>
+        <p>Next Stop: <span className="font-bold">{data?.nextStop?.name}</span></p>
+        <div className="flex gap-2">
+          <p>Distance: <span className="font-bold">{data?.nextStop?.distance}</span> </p>
+          <p>Time: <span className="font-bold">{data?.nextStop?.duration}</span></p>
+        </div>
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
       <div ref={mapContainerRef} style={{ width: "100%", height: "70vh" }} />
-      <div>
-        <p>Next Stop: {data?.nextStop?.name}</p>
-        <p>Remaining Distance: {data?.nextStop?.distance}</p>
-        <p>Remaining Duration: {data?.nextStop?.duration}</p>
-      </div>
-    </div>
+    </CardContent>
+    </Card>
   );
 };
 

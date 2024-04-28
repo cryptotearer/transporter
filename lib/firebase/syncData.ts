@@ -30,6 +30,7 @@ const syncData = async (
     mapInfo?: MapInfo,
 ) => {
     try {
+        console.log(position, nextStop, waypoints, mapInfo);
         const querySnapshot = await getDocs(collection(db, "syncData"));
         if (!querySnapshot.empty) {
             // Document exists, update its data
